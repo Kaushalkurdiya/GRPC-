@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>REST vs gRPC Benchmark</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #222;
+        }
+
+        .container {
+            width: 900px;
+            max-width: 95%;
+            margin: 40px auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 7px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 25px;
+            padding: 14px;
+            border: none;
+            border-radius: 7px;
+            background: #222;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #444;
+        }
+
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .result {
+            padding: 25px;
+            border-radius: 10px;
+            background: #f7f7f7;
+        }
+
+        .result h2 {
+            margin-top: 0;
+        }
+
+        .metric {
+            margin: 15px 0;
+        }
+
+        .metric-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .metric-value {
+            font-size: 25px;
+            font-weight: bold;
+        }
+
+        .winner {
+            margin-top: 20px;
+            text-align: center;
+            padding: 15px;
+            background: #eee;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .error {
+            color: #c00;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <h1>REST vs gRPC</h1>
+
+    <div class="subtitle">
+        Performance Benchmark
+    </div>
+
+
+    <!-- INPUT -->
+
+    <div class="card">
+
+        <h2>Benchmark Configuration</h2>
+
+        <div class="form-grid">
+
+            <div>
+
+                <label>
+                    Number of Users per Request
+                </label>
+
+                <input
+                    id="userCount"
+                    type="number"
+                    value="100"
+                    min="1"
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>
+                    Total Requests
+                </label>
+
+                <input
+                    id="totalRequests"
+                    type="number"
+                    value="20000"
+                    min="1"
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>
+                    Concurrent Requests
+                </label>
+
+                <input
+                    id="concurrency"
+                    type="number"
+                    value="500"
+                    min="1"
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>
+                    City
+                </label>
+
+                <input
+                    id="city"
+                    type="text"
+                    value="Ahmedabad"
+                >
+
+            </div>
+
+
+            <div>
+
+                <label>
+                    Name Prefix
+                </label>
+
+                <input
+                    id="namePrefix"
+                    type="text"
+                    value="User"
+                >
+
+            </div>
+
+        </div>
+
+
+        <button
+            id="runButton"
+            onclick="runBenchmark()"
+        >
+            Run Benchmark
+        </button>
+
+        <div
+            id="loading"
+            class="loading"
+        >
+            Running benchmark... Please wait.
+        </div>
+
+        <div
+            id="error"
+            class="error"
+        ></div>
+
+    </div>
+
+
+    <!-- RESULTS -->
+
+    <div
+        id="results"
+        class="results"
+    >
+
+        <div class="card">
+
+            <h2>Benchmark Results</h2>
+
+            <div class="result-grid">
+
+
+                <!-- REST -->
+
+                <div class="result">
+
+                    <h2>REST</h2>
+
+                    <div class="metric">
+
+                        <div class="metric-label">
+                            Total Time
+                        </div>
+
+                        <div
+                            id="restTime"
+                            class="metric-value"
+                        >
+                            -
+                        </div>
+
+                    </div>
+
+
+                    <div class="metric">
+
+                        <div class="metric-label">
+                            Requests / Second
+                        </div>
+
+                        <div
+                            id="restRps"
+                            class="metric-value"
+                        >
+                            -
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- gRPC -->
+
+                <div class="result">
+
+                    <h2>gRPC</h2>
+
+                    <div class="metric">
+
+                        <div class="metric-label">
+                            Total Time
+                        </div>
+
+                        <div
+                            id="grpcTime"
+                            class="metric-value"
+                        >
+                            -
+                        </div>
+
+                    </div>
+
+
+                    <div class="metric">
+
+                        <div class="metric-label">
+                            Requests / Second
+                        </div>
+
+                        <div
+                            id="grpcRps"
+                            class="metric-value"
+                        >
+                            -
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="winner"
+                class="winner"
+            ></div>
+
+        </div>
+
+
+        <!-- INPUT SUMMARY -->
+
+        <div class="card">
+
+            <h2>Test Configuration</h2>
+
+            <p>
+                Users per request:
+                <strong id="resultUsers"></strong>
+            </p>
+
+            <p>
+                Total requests:
+                <strong id="resultRequests"></strong>
+            </p>
+
+            <p>
+                Concurrency:
+                <strong id="resultConcurrency"></strong>
+            </p>
+
+            <p>
+                City:
+                <strong id="resultCity"></strong>
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+async function runBenchmark() {
+
+    const button =
+        document.getElementById("runButton");
+
+    const loading =
+        document.getElementById("loading");
+
+    const error =
+        document.getElementById("error");
+
+    const results =
+        document.getElementById("results");
+
+
+    error.textContent = "";
+
+    button.disabled = true;
+
+    loading.style.display = "block";
+
+    results.style.display = "none";
+
+
+    const input = {
+
+        userCount:
+            Number(
+                document.getElementById("userCount").value
+            ),
+
+        totalRequests:
+            Number(
+                document.getElementById("totalRequests").value
+            ),
+
+        concurrency:
+            Number(
+                document.getElementById("concurrency").value
+            ),
+
+        city:
+            document.getElementById("city").value,
+
+        namePrefix:
+            document.getElementById("namePrefix").value
+
+    };
+
+
+    try {
+
+        const response =
+            await fetch("/benchmark", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(input)
+
+            });
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error || "Benchmark failed"
+            );
+
+        }
+
+
+        // REST
+
+        document.getElementById("restTime")
+            .textContent =
+            data.rest.timeMs.toFixed(2) + " ms";
+
+
+        document.getElementById("restRps")
+            .textContent =
+            data.rest.requestsPerSecond.toFixed(2);
+
+
+        // gRPC
+
+        document.getElementById("grpcTime")
+            .textContent =
+            data.grpc.timeMs.toFixed(2) + " ms";
+
+
+        document.getElementById("grpcRps")
+            .textContent =
+            data.grpc.requestsPerSecond.toFixed(2);
+
+
+        // Input summary
+
+        document.getElementById("resultUsers")
+            .textContent =
+            data.input.userCount;
+
+
+        document.getElementById("resultRequests")
+            .textContent =
+            data.input.totalRequests;
+
+
+        document.getElementById("resultConcurrency")
+            .textContent =
+            data.input.concurrency;
+
+
+        document.getElementById("resultCity")
+            .textContent =
+            data.input.city;
+
+
+        // Winner
+
+        const restRps =
+            data.rest.requestsPerSecond;
+
+        const grpcRps =
+            data.grpc.requestsPerSecond;
+
+
+        if (grpcRps > restRps) {
+
+            const improvement =
+                (
+                    ((grpcRps - restRps) /
+                    restRps) * 100
+                ).toFixed(2);
+
+            document.getElementById("winner")
+                .textContent =
+                `gRPC wins by ${improvement}% throughput`;
+
+        } else {
+
+            const improvement =
+                (
+                    ((restRps - grpcRps) /
+                    grpcRps) * 100
+                ).toFixed(2);
+
+            document.getElementById("winner")
+                .textContent =
+                `REST wins by ${improvement}% throughput`;
+
+        }
+
+
+        results.style.display = "block";
+
+    } catch (err) {
+
+        error.textContent =
+            "Error: " + err.message;
+
+    }
+
+
+    button.disabled = false;
+
+    loading.style.display = "none";
+}
+
+</script>
+
+</body>
+
+</html>
