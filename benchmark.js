@@ -29,39 +29,57 @@ const packageDefinition =
 const userProto =
     grpc.loadPackageDefinition(packageDefinition).user;
 
-
-const grpcClient = new userProto.UserService(
-    "localhost:50051",
-    grpc.credentials.createInsecure()
-);
-
+const grpcClient =
+    new userProto.UserService(
+        "127.0.0.1:50051",
+        grpc.credentials.createInsecure()
+    );
 
 // -----------------------------
 // REST request
 // -----------------------------
-
 function restRequest(input) {
 
     return new Promise((resolve, reject) => {
 
-        const url =
-            `http://localhost:3000/users` +
+        const path =
+            `/users` +
             `?count=${input.userCount}` +
             `&city=${encodeURIComponent(input.city)}` +
             `&namePrefix=${encodeURIComponent(input.namePrefix)}`;
 
-        http.get(url, (res) => {
+        const options = {
+            hostname: "127.0.0.1",
+            port: 3000,
+            path: path,
+            method: "GET",
+            timeout: 30000
+        };
 
-            res.on("data", () => {});
+        const request = http.request(
+            options,
+            (res) => {
 
-            res.on("end", () => {
-                resolve();
-            });
+                res.on("data", () => {});
 
-        }).on("error", reject);
+                res.on("end", () => {
+                    resolve();
+                });
+
+            }
+        );
+
+        request.on("timeout", () => {
+            request.destroy(
+                new Error("REST request timed out")
+            );
+        });
+
+        request.on("error", reject);
+
+        request.end();
     });
 }
-
 
 // -----------------------------
 // gRPC request
@@ -244,10 +262,4 @@ app.listen(PORT, "0.0.0.0", () => {
     console.log(`Benchmark UI running on port ${PORT}`);
 });
 
-// app.listen(PORT, () => {
 
-//     console.log(
-//         `Benchmark UI running on http://localhost:${PORT}`
-//     );
-
-// });
