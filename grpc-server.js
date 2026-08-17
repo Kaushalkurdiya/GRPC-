@@ -47,20 +47,18 @@ server.addService(
     }
 );
 
-grpcServer.bindAsync(
-    "127.0.0.1:50051",
+server.bindAsync(
+    "0.0.0.0:50051",
     grpc.ServerCredentials.createInsecure(),
-    (error) => {
+    (error, port) => {
 
         if (error) {
             console.error(error);
             return;
         }
 
-        console.log(
-            "gRPC server running on port 50051"
-        );
+        console.log(`gRPC server running on port ${port}`);
 
-        grpcServer.start();
+        server.start();
     }
 );
