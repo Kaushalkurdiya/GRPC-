@@ -30,6 +30,6 @@ app.get("/users", (req, res) => {
     res.json(users);
 });
 
-app.listen(PORT, () => {
-    console.log(`REST server running on http://localhost:${PORT}`);
+app.listen(PORT, "127.0.0.1", () => {
+    console.log("REST server running on port 3000");
 });
