@@ -5,7 +5,7 @@ const protoLoader = require("@grpc/proto-loader");
 
 const app = express();
 
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 
 const PROTO_PATH = "./user.proto";
 
