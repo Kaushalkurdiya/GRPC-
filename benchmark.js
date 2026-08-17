@@ -5,7 +5,8 @@ const protoLoader = require("@grpc/proto-loader");
 
 const app = express();
 
-const PORT = 4000;
+
+const PORT = process.env.PORT || 4000;
 
 const PROTO_PATH = "./user.proto";
 
@@ -239,10 +240,14 @@ app.post("/benchmark", async (req, res) => {
 });
 
 
-app.listen(PORT, () => {
-
-    console.log(
-        `Benchmark UI running on http://localhost:${PORT}`
-    );
-
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Benchmark UI running on port ${PORT}`);
 });
+
+// app.listen(PORT, () => {
+
+//     console.log(
+//         `Benchmark UI running on http://localhost:${PORT}`
+//     );
+
+// });
